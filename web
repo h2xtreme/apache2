@@ -1,0 +1,56 @@
+#!/bin/bash
+
+apache=/etc/apache2/
+
+if [ "$1" = '' ]; then
+
+echo "Insira o nome da web"
+
+else
+
+mkdir /home/www/$1 && mkdir /home/www/$1/public_html
+
+cd /root/startkit && cp -R * /home/www/$1/public_html
+
+chown -R ftp.ftpgroup /home/www/$1
+
+find /home/www/$1 -type f -exec chmod 0640 {} \;
+find /home/www/$1 -type d -exec chmod 0750 {} \;
+
+mkdir /home/www/logs/$1
+
+chown -R www-data.root /home/www/logs/$1
+
+web="<VirtualHost *:80>\n
+DocumentRoot /home/www/teste/public_html\n
+ServerName www.teste\n
+<Directory /usr/share/phpmyadmin>\n
+                Options FollowSymLinks MultiViews\n
+                AllowOverride None\n
+                Order allow,deny\n
+                allow from all\n
+</Directory>\n
+<Directory /usr/share/phppgadmin>\n
+                Options FollowSymLinks MultiViews\n
+                AllowOverride None\n
+                Order allow,deny\n
+                allow from all\n
+</Directory>\n
+<Directory /home/www/teste/public_html>\n
+allow from all\n
+Options -Indexes\n
+</Directory>\n
+LogLevel warn\n
+TransferLog /home/www/logs/teste/access_log\n
+ErrorLog /home/www/logs/teste/error_log\nServerAlias teste\n</VirtualHost>"
+
+web2=${web//teste/$1}
+
+echo -e $web2 > $apache/sites-enabled/$1.conf
+
+cp $apache/sites-enabled/$1.conf ../sites-available
+
+/etc/init.d/apache2 reload
+/etc/init.d/apache2 reload
+
+fi
